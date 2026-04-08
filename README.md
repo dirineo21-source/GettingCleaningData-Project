@@ -1,82 +1,44 @@
-# run_analysis.R
-# Getting and Cleaning Data - Course Project
-# UCI HAR Dataset: Human Activity Recognition Using Smartphones
+# Getting and Cleaning Data — Course Project
 
-library(dplyr)
+## Descripción
 
-# ─────────────────────────────────────────
-# 0. Descargar y descomprimir los datos
-# ─────────────────────────────────────────
-url <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
-zipfile <- "UCI_HAR_Dataset.zip"
+Este repositorio contiene el proyecto final del curso **Getting and Cleaning Data** (Coursera / Johns Hopkins). El objetivo es demostrar la capacidad de recolectar, transformar y limpiar un conjunto de datos para análisis posterior.
 
-if (!file.exists(zipfile)) {
-  download.file(url, destfile = zipfile, method = "auto")
-}
-if (!dir.exists("UCI HAR Dataset")) {
-  unzip(zipfile)
-}
+## Datos
 
-# ─────────────────────────────────────────
-# 1. Unir training y test en un solo dataset
-# ─────────────────────────────────────────
+Los datos provienen del experimento **UCI HAR Dataset** (Human Activity Recognition Using Smartphones), que registra señales del acelerómetro y giroscopio de un Samsung Galaxy S mientras 30 voluntarios realizaban 6 actividades físicas.
 
-# Leer features y actividades
-features      <- read.table("UCI HAR Dataset/features.txt", col.names = c("id", "feature"))
-activity_labels <- read.table("UCI HAR Dataset/activity_labels.txt", col.names = c("id", "activity"))
+- **Fuente:** [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones)
 
-# Training
-X_train <- read.table("UCI HAR Dataset/train/X_train.txt", col.names = features$feature)
-y_train <- read.table("UCI HAR Dataset/train/y_train.txt", col.names = "activity_id")
-subject_train <- read.table("UCI HAR Dataset/train/subject_train.txt", col.names = "subject")
+## Archivos del repositorio
 
-# Test
-X_test <- read.table("UCI HAR Dataset/test/X_test.txt", col.names = features$feature)
-y_test <- read.table("UCI HAR Dataset/test/y_test.txt", col.names = "activity_id")
-subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt", col.names = "subject")
+| Archivo | Descripción |
+|---|---|
+| `run_analysis.R` | Script principal de limpieza y transformación |
+| `tidy_data.txt` | Dataset tidy final generado por el script |
+| `CodeBook.md` | Descripción de variables, transformaciones y unidades |
+| `README.md` | Este archivo |
 
-# Combinar
-X_all       <- rbind(X_train, X_test)
-y_all       <- rbind(y_train, y_test)
-subject_all <- rbind(subject_train, subject_test)
+## Cómo ejecutar el script
 
-full_data <- cbind(subject_all, y_all, X_all)
+1. Abre RStudio y establece el directorio de trabajo.
+2. Ejecuta:
 
-# ─────────────────────────────────────────
-# 2. Extraer solo media y desviación estándar
-# ─────────────────────────────────────────
-tidy_data <- full_data %>%
-  select(subject, activity_id, matches("mean\\.\\.|std\\.\\.", ignore.case = FALSE))
+```r
+source("run_analysis.R")
+```
 
-# ─────────────────────────────────────────
-# 3. Nombres descriptivos de actividades
-# ─────────────────────────────────────────
-tidy_data <- tidy_data %>%
-  left_join(activity_labels, by = c("activity_id" = "id")) %>%
-  select(-activity_id) %>%
-  relocate(activity, .after = subject)
+El script descargará los datos automáticamente si no existen.
 
-# ─────────────────────────────────────────
-# 4. Etiquetas descriptivas para variables
-# ─────────────────────────────────────────
-names(tidy_data) <- names(tidy_data) %>%
-  gsub("^t",        "Time",         .) %>%
-  gsub("^f",        "Frequency",    .) %>%
-  gsub("Acc",       "Accelerometer",.) %>%
-  gsub("Gyro",      "Gyroscope",    .) %>%
-  gsub("Mag",       "Magnitude",    .) %>%
-  gsub("BodyBody",  "Body",         .) %>%
-  gsub("\\.mean\\.\\.", "Mean",     .) %>%
-  gsub("\\.std\\.\\.",  "STD",      .) %>%
-  gsub("\\.",       "",             .)
+## Pasos del análisis
 
-# ─────────────────────────────────────────
-# 5. Dataset tidy con promedio por actividad y sujeto
-# ─────────────────────────────────────────
-summary_data <- tidy_data %>%
-  group_by(subject, activity) %>%
-  summarise(across(everything(), mean), .groups = "drop")
+1. Descarga y descompresión del dataset.
+2. Unión de los conjuntos train y test.
+3. Extracción de variables de media y desviación estándar.
+4. Nombres descriptivos para actividades y variables.
+5. Dataset resumen con promedio por sujeto y actividad, guardado en `tidy_data.txt`.
 
-write.table(summary_data, "tidy_data.txt", row.names = FALSE, quote = FALSE)
+## Dependencias
 
-message("✓ Archivo 'tidy_data.txt' generado correctamente.")
+- R >= 3.5
+- Paquete `dplyr`
